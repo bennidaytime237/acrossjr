@@ -3,742 +3,639 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>USDC Bridge for Kids!</title>
+  <title>USDC Bridge!</title>
   <script src="https://cdn.ethers.io/lib/ethers-6.13.umd.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@900&display=swap');
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    :root {
-      --pink: #FF6B9D;
-      --purple: #C471F5;
-      --blue: #45CAFF;
-      --green: #51E898;
-      --yellow: #FFD93D;
-      --orange: #FF8C42;
-      --red: #FF6B6B;
-      --white: #FFFFFF;
-      --dark: #2D1B69;
-    }
-
     body {
       font-family: 'Nunito', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #45CAFF 75%, #51E898 100%);
-      background-size: 400% 400%;
-      animation: gradientShift 8s ease infinite;
+      background: #1a0a3c;
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
+      overflow-x: hidden;
       position: relative;
     }
 
-    @keyframes gradientShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+    /* ── SKY GRADIENT ── */
+    .sky {
+      position: fixed; inset: 0;
+      background: linear-gradient(180deg, #0d0030 0%, #3b0080 40%, #ff6ec7 75%, #ffb347 100%);
+      z-index: 0;
     }
 
-    /* Floating bubbles */
-    .bubble {
-      position: fixed;
+    /* ── STARS ── */
+    .stars {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    }
+    .star {
+      position: absolute;
       border-radius: 50%;
-      opacity: 0.3;
-      animation: floatBubble 6s ease-in-out infinite;
-      pointer-events: none;
+      background: white;
+      animation: twinkle 2s ease-in-out infinite;
     }
-    .bubble:nth-child(1) { width: 80px; height: 80px; background: var(--yellow); top: 10%; left: 5%; animation-delay: 0s; }
-    .bubble:nth-child(2) { width: 120px; height: 120px; background: var(--pink); top: 60%; left: 85%; animation-delay: 1s; }
-    .bubble:nth-child(3) { width: 60px; height: 60px; background: var(--green); top: 80%; left: 15%; animation-delay: 2s; }
-    .bubble:nth-child(4) { width: 100px; height: 100px; background: var(--blue); top: 20%; left: 75%; animation-delay: 3s; }
-    .bubble:nth-child(5) { width: 50px; height: 50px; background: var(--orange); top: 45%; left: 45%; animation-delay: 4s; }
-
-    @keyframes floatBubble {
-      0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
-      33% { transform: translateY(-30px) rotate(5deg) scale(1.1); }
-      66% { transform: translateY(15px) rotate(-3deg) scale(0.95); }
+    @keyframes twinkle {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.2; transform: scale(0.5); }
     }
 
+    /* ── FLOATING COINS ── */
+    .coins-layer { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
+    .coin {
+      position: absolute;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Boogaloo', cursive;
+      font-weight: 900;
+      color: #7a4000;
+      animation: coinFloat linear infinite;
+      box-shadow: inset -4px -4px 0 rgba(0,0,0,0.25), 0 0 20px rgba(255,220,50,0.6);
+    }
+    .coin::after {
+      content: '$';
+      font-size: 0.55em;
+    }
+    @keyframes coinFloat {
+      0%   { transform: translateY(110vh) rotate(0deg);   opacity: 0; }
+      5%   { opacity: 1; }
+      95%  { opacity: 1; }
+      100% { transform: translateY(-20vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* ── BRIDGE SVG ── */
+    .bridge-wrap {
+      position: relative; z-index: 10;
+      width: min(540px, 95vw);
+      display: flex; flex-direction: column; align-items: center;
+    }
+
+    .bridge-svg {
+      width: 100%;
+      height: 110px;
+      display: block;
+      margin-bottom: -6px;
+      filter: drop-shadow(0 -6px 18px rgba(255,100,200,0.5));
+    }
+
+    /* ── CARD ── */
     .card {
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 32px;
-      padding: 40px 36px;
-      max-width: 460px;
-      width: 90%;
+      background: #fff;
+      border-radius: 0 0 36px 36px;
+      padding: 32px 32px 36px;
+      width: 100%;
       box-shadow:
-        0 20px 60px rgba(45, 27, 105, 0.3),
-        0 0 0 6px var(--yellow),
-        0 0 0 12px var(--pink);
+        0 12px 0 #c9006b,
+        0 20px 60px rgba(0,0,0,0.5),
+        inset 0 0 0 5px #FF3CAC;
       position: relative;
       z-index: 10;
-      animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-    @keyframes popIn {
-      0% { transform: scale(0.5) rotate(-5deg); opacity: 0; }
-      100% { transform: scale(1) rotate(0deg); opacity: 1; }
-    }
-
+    /* ── TITLE ── */
     .title {
-      font-family: 'Fredoka One', cursive;
-      font-size: 2.2rem;
+      font-family: 'Boogaloo', cursive;
+      font-size: 3rem;
       text-align: center;
-      background: linear-gradient(135deg, var(--pink), var(--purple), var(--blue));
+      line-height: 1;
+      margin-bottom: 4px;
+      -webkit-text-stroke: 3px #2D0060;
+      paint-order: stroke fill;
+      background: linear-gradient(135deg, #FF3CAC, #784BA0, #2B86C5, #00F5A0);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      margin-bottom: 8px;
-      letter-spacing: 1px;
+      filter: drop-shadow(0 3px 0 rgba(0,0,0,0.15));
     }
 
     .subtitle {
       text-align: center;
-      font-size: 1rem;
-      color: var(--dark);
-      font-weight: 700;
-      margin-bottom: 28px;
-      opacity: 0.7;
-    }
-
-    /* Chain badges */
-    .chain-row {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .chain-badge {
-      background: linear-gradient(135deg, var(--blue), var(--purple));
-      color: white;
-      font-family: 'Fredoka One', cursive;
-      font-size: 1.1rem;
-      padding: 12px 22px;
-      border-radius: 20px;
-      box-shadow: 0 4px 15px rgba(69, 202, 255, 0.4);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .chain-badge.dest {
-      background: linear-gradient(135deg, var(--green), var(--blue));
-      box-shadow: 0 4px 15px rgba(81, 232, 152, 0.4);
-    }
-
-    .arrow-bounce {
-      font-size: 2rem;
-      animation: arrowBounce 1s ease-in-out infinite;
-      color: var(--orange);
-    }
-    @keyframes arrowBounce {
-      0%, 100% { transform: translateX(0); }
-      50% { transform: translateX(6px); }
-    }
-
-    /* Input area */
-    .input-group {
-      margin-bottom: 20px;
-    }
-
-    .input-label {
-      font-family: 'Fredoka One', cursive;
-      font-size: 1rem;
-      color: var(--dark);
-      margin-bottom: 8px;
-      display: block;
-    }
-
-    .amount-wrapper {
-      position: relative;
-    }
-
-    .amount-input {
-      width: 100%;
-      padding: 16px 90px 16px 20px;
-      font-family: 'Nunito', sans-serif;
-      font-size: 1.6rem;
+      font-size: 1.05rem;
       font-weight: 900;
-      border: 4px solid var(--purple);
-      border-radius: 20px;
-      outline: none;
-      color: var(--dark);
-      background: #F8F0FF;
-      transition: border-color 0.3s, box-shadow 0.3s;
-    }
-    .amount-input:focus {
-      border-color: var(--pink);
-      box-shadow: 0 0 0 4px rgba(255, 107, 157, 0.3);
-    }
-    .amount-input::placeholder {
-      color: #C4A8E0;
-    }
-
-    .token-tag {
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: linear-gradient(135deg, var(--yellow), var(--orange));
-      color: var(--dark);
-      font-family: 'Fredoka One', cursive;
-      font-size: 1rem;
-      padding: 8px 14px;
-      border-radius: 14px;
-      box-shadow: 0 2px 8px rgba(255, 140, 66, 0.3);
-    }
-
-    /* Quick amount buttons */
-    .quick-amounts {
-      display: flex;
-      gap: 8px;
+      color: #784BA0;
       margin-bottom: 24px;
-      flex-wrap: wrap;
+      letter-spacing: 0.5px;
     }
-    .quick-btn {
-      flex: 1;
-      min-width: 60px;
-      padding: 10px 6px;
-      font-family: 'Fredoka One', cursive;
-      font-size: 0.95rem;
-      border: 3px solid var(--purple);
-      border-radius: 14px;
-      background: white;
-      color: var(--purple);
-      cursor: pointer;
-      transition: all 0.2s;
+
+    /* ── CHAIN ROW ── */
+    .chain-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; margin-bottom: 24px;
     }
-    .quick-btn:hover {
-      background: var(--purple);
+    .chain-badge {
+      font-family: 'Boogaloo', cursive;
+      font-size: 1.3rem;
+      padding: 12px 24px;
+      border-radius: 999px;
       color: white;
-      transform: scale(1.08);
-      box-shadow: 0 4px 12px rgba(196, 113, 245, 0.4);
+      -webkit-text-stroke: 1px rgba(0,0,0,0.2);
+      box-shadow: 0 6px 0 rgba(0,0,0,0.25), 0 0 24px rgba(100,150,255,0.4);
     }
-    .quick-btn:active { transform: scale(0.95); }
+    .chain-badge.arb { background: linear-gradient(135deg, #28A0F0, #0052B0); }
+    .chain-badge.base { background: linear-gradient(135deg, #00C2FF, #0052B0); }
 
-    /* Quote display */
-    .quote-box {
-      background: linear-gradient(135deg, #F0F4FF, #F8F0FF);
-      border: 3px dashed var(--blue);
-      border-radius: 18px;
-      padding: 16px 20px;
-      margin-bottom: 24px;
-      display: none;
+    .arrow-anim {
+      font-size: 2.2rem;
+      animation: arrowPop 0.6s ease-in-out infinite alternate;
+      filter: drop-shadow(0 2px 6px rgba(255,200,0,0.8));
     }
-    .quote-box.visible { display: block; animation: popIn 0.3s ease; }
-
-    .quote-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 4px 0;
-      font-weight: 700;
-      font-size: 0.95rem;
-      color: var(--dark);
+    @keyframes arrowPop {
+      from { transform: translateX(-4px) scale(1);   }
+      to   { transform: translateX(4px)  scale(1.2); }
     }
-    .quote-row .label { opacity: 0.6; }
-    .quote-row .value { color: var(--purple); font-family: 'Fredoka One', cursive; }
-    .quote-row .value.green { color: var(--green); }
 
-    /* Main bridge button */
-    .bridge-btn {
+    /* ── CONNECT BUTTON ── */
+    .connect-btn {
       width: 100%;
-      padding: 18px;
-      font-family: 'Fredoka One', cursive;
-      font-size: 1.5rem;
+      padding: 20px;
+      font-family: 'Boogaloo', cursive;
+      font-size: 1.9rem;
       letter-spacing: 1px;
       border: none;
       border-radius: 22px;
       cursor: pointer;
-      color: white;
-      background: linear-gradient(135deg, var(--pink), var(--purple), var(--blue));
-      background-size: 200% 200%;
-      animation: btnGradient 3s ease infinite;
-      box-shadow: 0 6px 25px rgba(196, 113, 245, 0.5);
-      transition: transform 0.2s, box-shadow 0.2s;
-      position: relative;
-      overflow: hidden;
+      color: #2D0060;
+      background: linear-gradient(135deg, #FFE000, #FF9500);
+      box-shadow: 0 8px 0 #b85f00, 0 12px 30px rgba(255,180,0,0.4);
+      transition: transform 0.1s, box-shadow 0.1s;
+      -webkit-text-stroke: 1px rgba(0,0,0,0.1);
     }
-    .bridge-btn:hover:not(:disabled) {
-      transform: translateY(-3px) scale(1.02);
-      box-shadow: 0 10px 35px rgba(196, 113, 245, 0.6);
-    }
-    .bridge-btn:active:not(:disabled) { transform: translateY(0) scale(0.98); }
-    .bridge-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    @keyframes btnGradient {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
+    .connect-btn:hover  { transform: translateY(-3px); box-shadow: 0 11px 0 #b85f00, 0 16px 40px rgba(255,180,0,0.5); }
+    .connect-btn:active { transform: translateY(6px);  box-shadow: 0 2px 0 #b85f00; }
 
-    /* Connect wallet button */
-    .connect-btn {
-      width: 100%;
-      padding: 18px;
-      font-family: 'Fredoka One', cursive;
-      font-size: 1.3rem;
-      border: 4px solid var(--yellow);
-      border-radius: 22px;
-      cursor: pointer;
-      color: var(--dark);
-      background: linear-gradient(135deg, var(--yellow), var(--orange));
-      box-shadow: 0 6px 20px rgba(255, 217, 61, 0.4);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .connect-btn:hover {
-      transform: translateY(-3px) scale(1.02);
-      box-shadow: 0 10px 30px rgba(255, 217, 61, 0.5);
-    }
-    .connect-btn:active { transform: scale(0.97); }
-
+    /* ── WALLET INFO ── */
     .wallet-info {
-      text-align: center;
-      font-weight: 900;
-      font-size: 0.85rem;
-      color: var(--dark);
-      opacity: 0.6;
-      margin-bottom: 16px;
-      word-break: break-all;
+      text-align: center; font-weight: 900; font-size: 0.9rem;
+      color: #784BA0; margin-bottom: 18px;
+      background: #F3E8FF; border-radius: 12px; padding: 8px 14px;
     }
 
-    /* Status area */
-    .status-area {
-      margin-top: 20px;
-      text-align: center;
+    /* ── INPUT ── */
+    .input-label {
+      font-family: 'Boogaloo', cursive;
+      font-size: 1.3rem; color: #2D0060; margin-bottom: 8px; display: block;
+    }
+    .amount-wrapper { position: relative; margin-bottom: 14px; }
+    .amount-input {
+      width: 100%;
+      padding: 18px 100px 18px 22px;
+      font-family: 'Boogaloo', cursive;
+      font-size: 2rem;
+      border: 5px solid #784BA0;
+      border-radius: 20px;
+      outline: none;
+      color: #2D0060;
+      background: #F3E8FF;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .amount-input:focus {
+      border-color: #FF3CAC;
+      box-shadow: 0 0 0 4px rgba(255,60,172,0.25);
+    }
+    .amount-input::placeholder { color: #C4A8E0; }
+    .token-tag {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      font-family: 'Boogaloo', cursive; font-size: 1.3rem;
+      background: linear-gradient(135deg, #FFE000, #FF9500);
+      color: #2D0060; padding: 8px 16px; border-radius: 14px;
+      box-shadow: 0 4px 0 #b85f00;
+    }
+
+    /* ── QUICK BTNS ── */
+    .quick-amounts { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .quick-btn {
+      flex: 1; min-width: 54px;
+      padding: 12px 6px;
+      font-family: 'Boogaloo', cursive; font-size: 1.1rem;
+      border: 4px solid #784BA0; border-radius: 16px;
+      background: white; color: #784BA0; cursor: pointer;
+      box-shadow: 0 5px 0 #4a1a80;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .quick-btn:hover  { background: #784BA0; color: white; transform: translateY(-2px); box-shadow: 0 7px 0 #4a1a80; }
+    .quick-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #4a1a80; }
+
+    /* ── QUOTE BOX ── */
+    .quote-box {
+      background: linear-gradient(135deg, #e8f4ff, #f3e8ff);
+      border: 4px dashed #2B86C5;
+      border-radius: 18px; padding: 14px 18px; margin-bottom: 20px;
       display: none;
     }
-    .status-area.visible { display: block; }
-
-    .status-msg {
-      font-family: 'Fredoka One', cursive;
-      font-size: 1.1rem;
-      color: var(--dark);
-      margin-bottom: 8px;
+    .quote-box.visible { display: block; animation: popIn 0.3s cubic-bezier(0.175,0.885,0.32,1.275); }
+    .quote-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 3px 0; font-size: 1rem; font-weight: 900; color: #2D0060;
     }
+    .quote-row .lbl { opacity: 0.55; }
+    .quote-row .val { font-family: 'Boogaloo', cursive; font-size: 1.15rem; color: #784BA0; }
+    .quote-row .val.green { color: #00A86B; }
 
-    .progress-bar {
+    /* ── BRIDGE BUTTON ── */
+    .bridge-btn {
       width: 100%;
-      height: 16px;
-      border-radius: 10px;
-      background: #EDE4F7;
-      overflow: hidden;
-      margin-bottom: 10px;
+      padding: 22px;
+      font-family: 'Boogaloo', cursive;
+      font-size: 2rem; letter-spacing: 1px;
+      border: none; border-radius: 22px; cursor: pointer;
+      color: white;
+      -webkit-text-stroke: 1.5px rgba(0,0,0,0.15);
+      background: linear-gradient(135deg, #FF3CAC, #784BA0, #2B86C5);
+      background-size: 300% 300%;
+      animation: btnShift 3s ease infinite;
+      box-shadow: 0 8px 0 #5a0070, 0 14px 40px rgba(255,60,172,0.4);
+      transition: transform 0.1s, box-shadow 0.1s;
     }
+    .bridge-btn:hover:not(:disabled)  { transform: translateY(-4px); box-shadow: 0 12px 0 #5a0070, 0 20px 50px rgba(255,60,172,0.5); }
+    .bridge-btn:active:not(:disabled) { transform: translateY(6px); box-shadow: 0 2px 0 #5a0070; }
+    .bridge-btn:disabled { opacity: 0.55; cursor: not-allowed; animation: none; background-position: 0% 50%; }
+    @keyframes btnShift {
+      0%   { background-position: 0%   50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0%   50%; }
+    }
+
+    /* ── STATUS ── */
+    .status-area { margin-top: 18px; text-align: center; display: none; }
+    .status-area.visible { display: block; }
+    .status-msg { font-family: 'Boogaloo', cursive; font-size: 1.3rem; color: #2D0060; margin-bottom: 8px; }
+    .progress-bar { width: 100%; height: 18px; border-radius: 10px; background: #E8D5FF; overflow: hidden; margin-bottom: 8px; border: 3px solid #784BA0; }
     .progress-fill {
-      height: 100%;
-      border-radius: 10px;
-      background: linear-gradient(90deg, var(--green), var(--blue), var(--purple));
-      background-size: 200% 100%;
-      animation: progressAnim 1.5s linear infinite;
-      transition: width 0.5s;
+      height: 100%; border-radius: 8px;
+      background: linear-gradient(90deg, #00F5A0, #2B86C5, #FF3CAC, #FFE000);
+      background-size: 300% 100%;
+      animation: progressAnim 1.2s linear infinite;
+      transition: width 0.6s;
     }
     @keyframes progressAnim {
-      0% { background-position: 200% 0; }
-      100% { background-position: 0% 0; }
+      0%   { background-position: 100% 0; }
+      100% { background-position:   0% 0; }
     }
-
-    .tx-link {
-      font-size: 0.85rem;
-      color: var(--purple);
-      font-weight: 700;
-      text-decoration: none;
-    }
+    .tx-link { font-size: 0.9rem; color: #784BA0; font-weight: 900; text-decoration: none; }
     .tx-link:hover { text-decoration: underline; }
 
-    /* Success confetti animation */
+    /* ── SUCCESS ── */
     .success-banner {
-      display: none;
-      text-align: center;
-      padding: 16px;
-      background: linear-gradient(135deg, var(--green), var(--blue));
-      border-radius: 18px;
-      margin-top: 16px;
-      color: white;
-      font-family: 'Fredoka One', cursive;
-      font-size: 1.3rem;
-      animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: none; text-align: center; padding: 18px;
+      background: linear-gradient(135deg, #00F5A0, #2B86C5);
+      border-radius: 20px; margin-top: 14px;
+      color: white; font-family: 'Boogaloo', cursive; font-size: 1.7rem;
+      -webkit-text-stroke: 1px rgba(0,0,0,0.1);
+      box-shadow: 0 6px 0 #007a50, 0 10px 30px rgba(0,245,160,0.4);
     }
-    .success-banner.visible { display: block; }
+    .success-banner.visible { display: block; animation: popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275); }
 
-    /* Sparkle decoration */
-    .sparkle {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background: var(--yellow);
-      clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-      animation: sparkleAnim 2s ease-in-out infinite;
-      pointer-events: none;
-    }
-    .sparkle:nth-child(1) { top: -10px; right: 30px; animation-delay: 0s; }
-    .sparkle:nth-child(2) { top: 20px; left: -8px; animation-delay: 0.5s; width: 16px; height: 16px; background: var(--pink); }
-    .sparkle:nth-child(3) { bottom: -5px; right: 60px; animation-delay: 1s; width: 14px; height: 14px; background: var(--green); }
-
-    @keyframes sparkleAnim {
-      0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
-      50% { transform: scale(1.3) rotate(180deg); opacity: 0.6; }
-    }
-
+    /* ── ERROR ── */
     .error-msg {
-      color: var(--red);
-      font-weight: 900;
-      font-size: 0.9rem;
-      text-align: center;
-      margin-top: 12px;
-      display: none;
+      color: #FF3333; font-weight: 900; font-size: 1rem;
+      text-align: center; margin-top: 10px; display: none;
+      background: #FFE8E8; border-radius: 12px; padding: 10px 14px;
+      border: 3px solid #FF3333;
     }
     .error-msg.visible { display: block; animation: popIn 0.3s ease; }
+
+    @keyframes popIn {
+      0%   { transform: scale(0.6) rotate(-3deg); opacity: 0; }
+      100% { transform: scale(1)   rotate(0deg);  opacity: 1; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- Floating bubbles -->
-  <div class="bubble"></div>
-  <div class="bubble"></div>
-  <div class="bubble"></div>
-  <div class="bubble"></div>
-  <div class="bubble"></div>
+  <div class="sky"></div>
 
-  <div class="card">
-    <!-- Sparkles -->
-    <div class="sparkle"></div>
-    <div class="sparkle"></div>
-    <div class="sparkle"></div>
+  <!-- Stars -->
+  <div class="stars" id="stars"></div>
 
-    <div class="title">USDC Bridge!</div>
-    <div class="subtitle">Zoom your coins from Arbitrum to Base</div>
+  <!-- Floating coins -->
+  <div class="coins-layer" id="coins"></div>
 
-    <!-- Chain badges -->
-    <div class="chain-row">
-      <div class="chain-badge">Arbitrum</div>
-      <span class="arrow-bounce">&#10132;</span>
-      <div class="chain-badge dest">Base</div>
-    </div>
+  <!-- Bridge + Card -->
+  <div class="bridge-wrap">
 
-    <!-- Wallet connection -->
-    <div id="walletSection">
-      <button class="connect-btn" id="connectBtn" onclick="connectWallet()">
-        Connect Wallet
-      </button>
-    </div>
+    <!-- SVG Suspension Bridge -->
+    <svg class="bridge-svg" viewBox="0 0 540 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Road deck -->
+      <rect x="0" y="88" width="540" height="14" rx="4" fill="#FF9500" stroke="#b85f00" stroke-width="3"/>
+      <!-- Road stripes -->
+      <rect x="60"  y="93" width="40" height="5" rx="2" fill="#FFE000"/>
+      <rect x="155" y="93" width="40" height="5" rx="2" fill="#FFE000"/>
+      <rect x="250" y="93" width="40" height="5" rx="2" fill="#FFE000"/>
+      <rect x="345" y="93" width="40" height="5" rx="2" fill="#FFE000"/>
+      <rect x="440" y="93" width="40" height="5" rx="2" fill="#FFE000"/>
 
-    <!-- Bridge form (hidden until connected) -->
-    <div id="bridgeForm" style="display: none;">
-      <div class="wallet-info" id="walletAddr"></div>
+      <!-- Left tower -->
+      <rect x="108" y="14" width="20" height="82" rx="5" fill="#FF3CAC" stroke="#9b006b" stroke-width="3"/>
+      <rect x="96"  y="14" width="44" height="14" rx="6" fill="#FF3CAC" stroke="#9b006b" stroke-width="3"/>
+      <!-- Tower top ball -->
+      <circle cx="118" cy="10" r="9" fill="#FFE000" stroke="#b85f00" stroke-width="3"/>
 
-      <div class="input-group">
-        <label class="input-label">How much USDC?</label>
+      <!-- Right tower -->
+      <rect x="412" y="14" width="20" height="82" rx="5" fill="#FF3CAC" stroke="#9b006b" stroke-width="3"/>
+      <rect x="400" y="14" width="44" height="14" rx="6" fill="#FF3CAC" stroke="#9b006b" stroke-width="3"/>
+      <!-- Tower top ball -->
+      <circle cx="422" cy="10" r="9" fill="#FFE000" stroke="#b85f00" stroke-width="3"/>
+
+      <!-- Main cables (catenary curves) -->
+      <path d="M 118 18 Q 270 55 422 18" stroke="#784BA0" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M 118 18 Q 270 55 422 18" stroke="#C471F5" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-dasharray="8 6"/>
+
+      <!-- Vertical suspenders -->
+      <line x1="160" y1="34.5" x2="160" y2="88" stroke="#784BA0" stroke-width="3" stroke-linecap="round"/>
+      <line x1="200" y1="43"   x2="200" y2="88" stroke="#784BA0" stroke-width="3" stroke-linecap="round"/>
+      <line x1="240" y1="48.5" x2="240" y2="88" stroke="#784BA0" stroke-width="3" stroke-linecap="round"/>
+      <line x1="270" y1="50"   x2="270" y2="88" stroke="#784BA0" stroke-width="3" stroke-linecap="round"/>
+      <line x1="300" y1="48.5" x2="300" y2="88" stroke="#784BA0" stroke-width="3" stroke-linecap="round"/>
+      <line x1="340" y1="43"   x2="340" y2="88" stroke="#784BA0" stroke-width="3" stroke-linecap="round"/>
+      <line x1="380" y1="34.5" x2="380" y2="88" stroke="#784BA0" stroke-width="3" stroke-linecap="round"/>
+
+      <!-- Approach roads -->
+      <rect x="0"   y="88" width="108" height="14" rx="0" fill="#FF9500" stroke="#b85f00" stroke-width="2"/>
+      <rect x="432" y="88" width="108" height="14" rx="0" fill="#FF9500" stroke="#b85f00" stroke-width="2"/>
+
+      <!-- Cute chain labels on towers -->
+      <rect x="86" y="52" width="64" height="22" rx="8" fill="#FFE000" stroke="#b85f00" stroke-width="2"/>
+      <text x="118" y="67" text-anchor="middle" font-family="Boogaloo,cursive" font-size="12" fill="#2D0060">ARB</text>
+
+      <rect x="390" y="52" width="64" height="22" rx="8" fill="#00C2FF" stroke="#007bb5" stroke-width="2"/>
+      <text x="422" y="67" text-anchor="middle" font-family="Boogaloo,cursive" font-size="12" fill="white">BASE</text>
+    </svg>
+
+    <!-- Card -->
+    <div class="card">
+      <div class="title">USDC BRIDGE!</div>
+      <div class="subtitle">🚀 Zoom your coins from Arbitrum to Base! 🚀</div>
+
+      <div class="chain-row">
+        <div class="chain-badge arb">⚡ Arbitrum</div>
+        <span class="arrow-anim">➡️</span>
+        <div class="chain-badge base">🔵 Base</div>
+      </div>
+
+      <!-- Wallet connect -->
+      <div id="walletSection">
+        <button class="connect-btn" onclick="connectWallet()">
+          🦊 Connect Wallet!
+        </button>
+      </div>
+
+      <!-- Bridge form -->
+      <div id="bridgeForm" style="display:none;">
+        <div class="wallet-info" id="walletAddr"></div>
+
+        <label class="input-label">💰 How much USDC to send?</label>
         <div class="amount-wrapper">
-          <input
-            type="number"
-            class="amount-input"
-            id="amountInput"
-            placeholder="0.00"
-            min="0"
-            step="any"
-            oninput="onAmountChange()"
-          />
+          <input type="number" class="amount-input" id="amountInput"
+            placeholder="0.00" min="0" step="any" oninput="onAmountChange()"/>
           <span class="token-tag">USDC</span>
         </div>
-      </div>
 
-      <div class="quick-amounts">
-        <button class="quick-btn" onclick="setAmount('1')">$1</button>
-        <button class="quick-btn" onclick="setAmount('5')">$5</button>
-        <button class="quick-btn" onclick="setAmount('10')">$10</button>
-        <button class="quick-btn" onclick="setAmount('25')">$25</button>
-        <button class="quick-btn" onclick="setAmount('50')">$50</button>
-      </div>
-
-      <!-- Quote info -->
-      <div class="quote-box" id="quoteBox">
-        <div class="quote-row">
-          <span class="label">You get</span>
-          <span class="value green" id="quoteOutput">--</span>
+        <div class="quick-amounts">
+          <button class="quick-btn" onclick="setAmount('1')">$1</button>
+          <button class="quick-btn" onclick="setAmount('5')">$5</button>
+          <button class="quick-btn" onclick="setAmount('10')">$10</button>
+          <button class="quick-btn" onclick="setAmount('25')">$25</button>
+          <button class="quick-btn" onclick="setAmount('50')">$50</button>
         </div>
-        <div class="quote-row">
-          <span class="label">Fee</span>
-          <span class="value" id="quoteFee">--</span>
+
+        <div class="quote-box" id="quoteBox">
+          <div class="quote-row">
+            <span class="lbl">You receive</span>
+            <span class="val green" id="quoteOutput">--</span>
+          </div>
+          <div class="quote-row">
+            <span class="lbl">Bridge fee</span>
+            <span class="val" id="quoteFee">--</span>
+          </div>
+          <div class="quote-row">
+            <span class="lbl">Speed</span>
+            <span class="val" id="quoteTime">--</span>
+          </div>
         </div>
-        <div class="quote-row">
-          <span class="label">Speed</span>
-          <span class="value" id="quoteTime">--</span>
+
+        <button class="bridge-btn" id="bridgeBtn" onclick="doBridge()" disabled>
+          🌉 Get Quote First!
+        </button>
+
+        <div class="error-msg" id="errorMsg"></div>
+
+        <div class="status-area" id="statusArea">
+          <div class="status-msg" id="statusMsg">Sending…</div>
+          <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+          <a class="tx-link" id="txLink" href="#" target="_blank" style="display:none;"></a>
         </div>
-      </div>
 
-      <button class="bridge-btn" id="bridgeBtn" onclick="doBridge()" disabled>
-        Get Quote First!
-      </button>
-
-      <div class="error-msg" id="errorMsg"></div>
-
-      <!-- Status area -->
-      <div class="status-area" id="statusArea">
-        <div class="status-msg" id="statusMsg">Sending...</div>
-        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 0%"></div></div>
-        <a class="tx-link" id="txLink" href="#" target="_blank" style="display:none;">View on Explorer</a>
-      </div>
-
-      <div class="success-banner" id="successBanner">
-        Woohoo! Your USDC arrived on Base!
+        <div class="success-banner" id="successBanner">
+          🎉 WOOHOO! Your USDC landed on Base! 🎉
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    // --- Constants ---
-    const ACROSS_API = "https://app.across.to/api";
-    const ARBITRUM_CHAIN_ID = 42161;
-    const BASE_CHAIN_ID = 8453;
-    const USDC_ARBITRUM = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831";
-    const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
-    const USDC_DECIMALS = 6;
+    // ── STARS ──
+    const starsEl = document.getElementById('stars');
+    for (let i = 0; i < 80; i++) {
+      const s = document.createElement('div');
+      s.className = 'star';
+      const size = Math.random() * 3 + 1;
+      s.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*70}%;left:${Math.random()*100}%;animation-delay:${Math.random()*3}s;animation-duration:${1.5+Math.random()*2}s`;
+      starsEl.appendChild(s);
+    }
 
-    const ARBITRUM_HEX = "0x" + ARBITRUM_CHAIN_ID.toString(16);
+    // ── COINS ──
+    const coinsEl = document.getElementById('coins');
+    const coinColors = [
+      ['#FFD700','#FFA500'],['#C0C0C0','#888'],['#50C8FF','#0080C0'],
+      ['#FF6EC7','#C00080'],['#00F5A0','#007A50'],['#FF9500','#B85F00'],
+    ];
+    function spawnCoin() {
+      const c = document.createElement('div');
+      c.className = 'coin';
+      const size = 36 + Math.random() * 44;
+      const [bg1, bg2] = coinColors[Math.floor(Math.random() * coinColors.length)];
+      const dur = 6 + Math.random() * 10;
+      const delay = Math.random() * 4;
+      c.style.cssText = `
+        width:${size}px;height:${size}px;
+        left:${Math.random()*100}%;
+        background:radial-gradient(circle at 35% 35%, ${bg1}, ${bg2});
+        font-size:${size*0.42}px;
+        animation-duration:${dur}s;
+        animation-delay:${delay}s;
+      `;
+      coinsEl.appendChild(c);
+      setTimeout(() => c.remove(), (dur + delay) * 1000 + 500);
+    }
+    for (let i = 0; i < 18; i++) spawnCoin();
+    setInterval(spawnCoin, 900);
 
-    let provider = null;
-    let signer = null;
-    let depositor = null;
-    let currentQuote = null;
-    let quoteTimer = null;
+    // ── BRIDGE LOGIC ──
+    const ACROSS_API      = 'https://app.across.to/api';
+    const ARBITRUM_CHAIN  = 42161;
+    const BASE_CHAIN      = 8453;
+    const USDC_ARB        = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
+    const USDC_BASE       = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+    const ARB_HEX         = '0x' + ARBITRUM_CHAIN.toString(16);
 
-    // --- DOM refs ---
-    const $connectBtn = document.getElementById("connectBtn");
-    const $walletSection = document.getElementById("walletSection");
-    const $bridgeForm = document.getElementById("bridgeForm");
-    const $walletAddr = document.getElementById("walletAddr");
-    const $amountInput = document.getElementById("amountInput");
-    const $quoteBox = document.getElementById("quoteBox");
-    const $quoteOutput = document.getElementById("quoteOutput");
-    const $quoteFee = document.getElementById("quoteFee");
-    const $quoteTime = document.getElementById("quoteTime");
-    const $bridgeBtn = document.getElementById("bridgeBtn");
-    const $errorMsg = document.getElementById("errorMsg");
-    const $statusArea = document.getElementById("statusArea");
-    const $statusMsg = document.getElementById("statusMsg");
-    const $progressFill = document.getElementById("progressFill");
-    const $txLink = document.getElementById("txLink");
-    const $successBanner = document.getElementById("successBanner");
+    let provider, signer, depositor, currentQuote, quoteTimer;
 
-    // --- Helpers ---
+    const $ws    = document.getElementById('walletSection');
+    const $bf    = document.getElementById('bridgeForm');
+    const $wa    = document.getElementById('walletAddr');
+    const $ai    = document.getElementById('amountInput');
+    const $qb    = document.getElementById('quoteBox');
+    const $qo    = document.getElementById('quoteOutput');
+    const $qf    = document.getElementById('quoteFee');
+    const $qt    = document.getElementById('quoteTime');
+    const $bb    = document.getElementById('bridgeBtn');
+    const $em    = document.getElementById('errorMsg');
+    const $sa    = document.getElementById('statusArea');
+    const $sm    = document.getElementById('statusMsg');
+    const $pf    = document.getElementById('progressFill');
+    const $tl    = document.getElementById('txLink');
+    const $sb    = document.getElementById('successBanner');
+
     function showError(msg) {
-      $errorMsg.textContent = msg;
-      $errorMsg.classList.add("visible");
-      setTimeout(() => $errorMsg.classList.remove("visible"), 5000);
+      $em.textContent = msg; $em.classList.add('visible');
+      setTimeout(() => $em.classList.remove('visible'), 6000);
+    }
+    function short(a) { return a.slice(0,6)+'…'+a.slice(-4); }
+    function fmtUSDC(wei) {
+      const n = Number(wei)/1e6;
+      return (n < 1 ? n.toFixed(4) : n.toFixed(2)) + ' USDC';
     }
 
-    function shortAddr(addr) {
-      return addr.slice(0, 6) + "..." + addr.slice(-4);
-    }
-
-    function formatUsdc(wei) {
-      const n = Number(wei) / 1e6;
-      return n.toFixed(n < 1 ? 4 : 2) + " USDC";
-    }
-
-    // --- Wallet ---
     async function connectWallet() {
-      if (!window.ethereum) {
-        showError("No wallet found! Install MetaMask.");
-        return;
-      }
-
+      if (!window.ethereum) { showError('No wallet found! Install MetaMask.'); return; }
       try {
         provider = new ethers.BrowserProvider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        signer = await provider.getSigner();
+        await provider.send('eth_requestAccounts', []);
+        signer   = await provider.getSigner();
         depositor = await signer.getAddress();
-
-        // Switch to Arbitrum
         try {
-          await window.ethereum.request({
-            method: "wallet_switchEthereumChain",
-            params: [{ chainId: ARBITRUM_HEX }],
-          });
-        } catch (switchErr) {
-          if (switchErr.code === 4902) {
-            await window.ethereum.request({
-              method: "wallet_addEthereumChain",
-              params: [{
-                chainId: ARBITRUM_HEX,
-                chainName: "Arbitrum One",
-                rpcUrls: ["https://arb1.arbitrum.io/rpc"],
-                nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
-                blockExplorerUrls: ["https://arbiscan.io"],
-              }],
-            });
-          } else {
-            throw switchErr;
-          }
+          await window.ethereum.request({ method:'wallet_switchEthereumChain', params:[{chainId:ARB_HEX}] });
+        } catch(e) {
+          if (e.code === 4902) await window.ethereum.request({ method:'wallet_addEthereumChain', params:[{
+            chainId: ARB_HEX, chainName:'Arbitrum One',
+            rpcUrls:['https://arb1.arbitrum.io/rpc'],
+            nativeCurrency:{name:'ETH',symbol:'ETH',decimals:18},
+            blockExplorerUrls:['https://arbiscan.io'],
+          }]});
+          else throw e;
         }
-
-        // Refresh signer after chain switch
-        provider = new ethers.BrowserProvider(window.ethereum);
-        signer = await provider.getSigner();
-
-        $walletSection.style.display = "none";
-        $bridgeForm.style.display = "block";
-        $walletAddr.textContent = "Wallet: " + shortAddr(depositor);
-      } catch (err) {
-        showError(err.message || "Failed to connect wallet");
-      }
+        provider  = new ethers.BrowserProvider(window.ethereum);
+        signer    = await provider.getSigner();
+        $ws.style.display = 'none';
+        $bf.style.display = 'block';
+        $wa.textContent   = '🦊 ' + short(depositor) + '  •  Arbitrum';
+      } catch(e) { showError(e.message || 'Wallet connect failed'); }
     }
 
-    // --- Amount / Quote ---
-    function setAmount(val) {
-      $amountInput.value = val;
-      onAmountChange();
-    }
+    function setAmount(v) { $ai.value = v; onAmountChange(); }
 
     function onAmountChange() {
       clearTimeout(quoteTimer);
       currentQuote = null;
-      $bridgeBtn.disabled = true;
-      $bridgeBtn.textContent = "Get Quote First!";
-      $quoteBox.classList.remove("visible");
-
-      const val = parseFloat($amountInput.value);
-      if (!val || val <= 0) return;
-
-      quoteTimer = setTimeout(() => fetchQuote(val), 600);
+      $bb.disabled = true;
+      $bb.textContent = '🌉 Get Quote First!';
+      $qb.classList.remove('visible');
+      const v = parseFloat($ai.value);
+      if (!v || v <= 0) return;
+      quoteTimer = setTimeout(() => fetchQuote(v), 600);
     }
 
     async function fetchQuote(amount) {
       if (!depositor) return;
-
-      $bridgeBtn.textContent = "Loading quote...";
-      $bridgeBtn.disabled = true;
-
+      $bb.textContent = '⏳ Loading quote…';
+      $bb.disabled = true;
       try {
-        const amountWei = BigInt(Math.round(amount * 1e6)).toString();
-        const params = new URLSearchParams({
-          tradeType: "exactInput",
-          amount: amountWei,
-          inputToken: USDC_ARBITRUM,
-          outputToken: USDC_BASE,
-          originChainId: ARBITRUM_CHAIN_ID.toString(),
-          destinationChainId: BASE_CHAIN_ID.toString(),
-          depositor,
-          slippage: "auto",
+        const amtWei = BigInt(Math.round(amount * 1e6)).toString();
+        const p = new URLSearchParams({
+          tradeType:'exactInput', amount:amtWei,
+          inputToken:USDC_ARB, outputToken:USDC_BASE,
+          originChainId:ARBITRUM_CHAIN, destinationChainId:BASE_CHAIN,
+          depositor, slippage:'auto',
         });
-
-        const res = await fetch(`${ACROSS_API}/swap/approval?${params}`);
-        if (!res.ok) {
-          const body = await res.text();
-          throw new Error(body);
-        }
-
+        const res = await fetch(`${ACROSS_API}/swap/approval?${p}`);
+        if (!res.ok) throw new Error(await res.text());
         currentQuote = await res.json();
-
-        const outputAmt = Number(currentQuote.expectedOutputAmount) / 1e6;
-        const fee = amount - outputAmt;
-
-        $quoteOutput.textContent = formatUsdc(currentQuote.expectedOutputAmount);
-        $quoteFee.textContent = fee > 0 ? "~" + fee.toFixed(4) + " USDC" : "< 0.01 USDC";
-        $quoteTime.textContent = "~" + (currentQuote.expectedFillTime || 2) + "s";
-        $quoteBox.classList.add("visible");
-
-        $bridgeBtn.textContent = "Bridge " + amount + " USDC!";
-        $bridgeBtn.disabled = false;
-      } catch (err) {
-        showError("Quote failed: " + (err.message || err));
-        $bridgeBtn.textContent = "Get Quote First!";
+        const out = Number(currentQuote.expectedOutputAmount)/1e6;
+        const fee = amount - out;
+        $qo.textContent = fmtUSDC(currentQuote.expectedOutputAmount);
+        $qf.textContent = fee > 0 ? '~'+fee.toFixed(4)+' USDC' : '< 0.0001 USDC';
+        $qt.textContent = '~'+(currentQuote.expectedFillTime||2)+'s ⚡';
+        $qb.classList.add('visible');
+        $bb.textContent = '🚀 Bridge '+amount+' USDC!';
+        $bb.disabled = false;
+      } catch(e) {
+        showError('Quote failed: '+(e.message||e));
+        $bb.textContent = '🌉 Get Quote First!';
       }
     }
 
-    // --- Bridge ---
     async function doBridge() {
       if (!currentQuote || !signer) return;
-
-      $bridgeBtn.disabled = true;
-      $bridgeBtn.textContent = "Bridging...";
-      $statusArea.classList.add("visible");
-      $successBanner.classList.remove("visible");
-      $txLink.style.display = "none";
-      $progressFill.style.width = "10%";
-
+      $bb.disabled = true; $bb.textContent = '🌉 Bridging…';
+      $sa.classList.add('visible'); $sb.classList.remove('visible');
+      $tl.style.display = 'none'; $pf.style.width = '10%';
       try {
-        // Step 1: Approvals
-        if (currentQuote.approvalTxns && currentQuote.approvalTxns.length > 0) {
-          $statusMsg.textContent = "Approving USDC...";
-          $progressFill.style.width = "15%";
-
-          for (const approvalTx of currentQuote.approvalTxns) {
-            const tx = await signer.sendTransaction({
-              to: approvalTx.to,
-              data: approvalTx.data,
-            });
+        if (currentQuote.approvalTxns?.length) {
+          $sm.textContent = '✅ Approving USDC…'; $pf.style.width = '15%';
+          for (const a of currentQuote.approvalTxns) {
+            const tx = await signer.sendTransaction({to:a.to, data:a.data});
             await tx.wait();
           }
-          $progressFill.style.width = "30%";
+          $pf.style.width = '30%';
         }
-
-        // Step 2: Bridge tx
-        $statusMsg.textContent = "Sending bridge transaction...";
-        $progressFill.style.width = "40%";
-
+        $sm.textContent = '📤 Sending to bridge…'; $pf.style.width = '40%';
         const swapTx = await signer.sendTransaction({
           to: currentQuote.swapTx.to,
           data: currentQuote.swapTx.data,
           gasLimit: currentQuote.swapTx.gas,
         });
-
-        $statusMsg.textContent = "Waiting for confirmation...";
-        $progressFill.style.width = "50%";
-        $txLink.href = "https://arbiscan.io/tx/" + swapTx.hash;
-        $txLink.textContent = "Tx: " + shortAddr(swapTx.hash);
-        $txLink.style.display = "inline";
-
+        $sm.textContent = '⏳ Waiting for confirmation…'; $pf.style.width = '50%';
+        $tl.href = 'https://arbiscan.io/tx/'+swapTx.hash;
+        $tl.textContent = '🔗 View on Arbiscan: '+short(swapTx.hash);
+        $tl.style.display = 'block';
         const receipt = await swapTx.wait();
-        $progressFill.style.width = "65%";
-        $statusMsg.textContent = "Confirmed! Waiting for fill on Base...";
-
-        // Step 3: Poll status
+        $pf.style.width = '65%';
+        $sm.textContent = '🎯 Confirmed! Waiting for Base fill…';
         await pollStatus(receipt.hash);
-
-      } catch (err) {
-        showError(err.reason || err.message || "Transaction failed");
-        $statusMsg.textContent = "Failed!";
-        $progressFill.style.width = "0%";
-        $bridgeBtn.disabled = false;
-        $bridgeBtn.textContent = "Try Again!";
+      } catch(e) {
+        showError(e.reason || e.message || 'Transaction failed');
+        $sm.textContent = '❌ Failed!'; $pf.style.width = '0%';
+        $bb.disabled = false; $bb.textContent = '🔄 Try Again!';
       }
     }
 
     async function pollStatus(txHash) {
       const url = `${ACROSS_API}/deposit/status?depositTxnRef=${txHash}`;
-
       for (let i = 0; i < 60; i++) {
         try {
-          const res = await fetch(url);
-          if (res.ok) {
-            const data = await res.json();
-            const pct = Math.min(65 + i * 2, 95);
-            $progressFill.style.width = pct + "%";
-
-            if (data.status === "filled") {
-              $progressFill.style.width = "100%";
-              $statusMsg.textContent = "Filled!";
-              $successBanner.classList.add("visible");
-              $bridgeBtn.textContent = "Bridge More!";
-              $bridgeBtn.disabled = false;
+          const r = await fetch(url);
+          if (r.ok) {
+            const d = await r.json();
+            $pf.style.width = Math.min(65+i*2, 95)+'%';
+            if (d.status === 'filled') {
+              $pf.style.width = '100%';
+              $sm.textContent = '🎉 Filled!';
+              $sb.classList.add('visible');
+              $bb.textContent = '🚀 Bridge More!';
+              $bb.disabled = false;
               currentQuote = null;
               return;
             }
           }
-        } catch (_) { /* ignore fetch errors during polling */ }
-
+        } catch(_) {}
         await new Promise(r => setTimeout(r, 10000));
       }
-
-      $statusMsg.textContent = "Still waiting... check Across explorer.";
-      $bridgeBtn.textContent = "Bridge More!";
-      $bridgeBtn.disabled = false;
+      $sm.textContent = 'Still waiting… check Across explorer.';
+      $bb.textContent = '🚀 Bridge More!'; $bb.disabled = false;
     }
   </script>
 </body>
