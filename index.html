@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>USDC Bridge for Kids!</title>
+  <script src="https://cdn.ethers.io/lib/ethers-6.13.umd.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --pink: #FF6B9D;
+      --purple: #C471F5;
+      --blue: #45CAFF;
+      --green: #51E898;
+      --yellow: #FFD93D;
+      --orange: #FF8C42;
+      --red: #FF6B6B;
+      --white: #FFFFFF;
+      --dark: #2D1B69;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #45CAFF 75%, #51E898 100%);
+      background-size: 400% 400%;
+      animation: gradientShift 8s ease infinite;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Floating bubbles */
+    .bubble {
+      position: fixed;
+      border-radius: 50%;
+      opacity: 0.3;
+      animation: floatBubble 6s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .bubble:nth-child(1) { width: 80px; height: 80px; background: var(--yellow); top: 10%; left: 5%; animation-delay: 0s; }
+    .bubble:nth-child(2) { width: 120px; height: 120px; background: var(--pink); top: 60%; left: 85%; animation-delay: 1s; }
+    .bubble:nth-child(3) { width: 60px; height: 60px; background: var(--green); top: 80%; left: 15%; animation-delay: 2s; }
+    .bubble:nth-child(4) { width: 100px; height: 100px; background: var(--blue); top: 20%; left: 75%; animation-delay: 3s; }
+    .bubble:nth-child(5) { width: 50px; height: 50px; background: var(--orange); top: 45%; left: 45%; animation-delay: 4s; }
+
+    @keyframes floatBubble {
+      0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+      33% { transform: translateY(-30px) rotate(5deg) scale(1.1); }
+      66% { transform: translateY(15px) rotate(-3deg) scale(0.95); }
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 32px;
+      padding: 40px 36px;
+      max-width: 460px;
+      width: 90%;
+      box-shadow:
+        0 20px 60px rgba(45, 27, 105, 0.3),
+        0 0 0 6px var(--yellow),
+        0 0 0 12px var(--pink);
+      position: relative;
+      z-index: 10;
+      animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.5) rotate(-5deg); opacity: 0; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    .title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.2rem;
+      text-align: center;
+      background: linear-gradient(135deg, var(--pink), var(--purple), var(--blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 1rem;
+      color: var(--dark);
+      font-weight: 700;
+      margin-bottom: 28px;
+      opacity: 0.7;
+    }
+
+    /* Chain badges */
+    .chain-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .chain-badge {
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      color: white;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.1rem;
+      padding: 12px 22px;
+      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(69, 202, 255, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chain-badge.dest {
+      background: linear-gradient(135deg, var(--green), var(--blue));
+      box-shadow: 0 4px 15px rgba(81, 232, 152, 0.4);
+    }
+
+    .arrow-bounce {
+      font-size: 2rem;
+      animation: arrowBounce 1s ease-in-out infinite;
+      color: var(--orange);
+    }
+    @keyframes arrowBounce {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(6px); }
+    }
+
+    /* Input area */
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    .input-label {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1rem;
+      color: var(--dark);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .amount-wrapper {
+      position: relative;
+    }
+
+    .amount-input {
+      width: 100%;
+      padding: 16px 90px 16px 20px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 900;
+      border: 4px solid var(--purple);
+      border-radius: 20px;
+      outline: none;
+      color: var(--dark);
+      background: #F8F0FF;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .amount-input:focus {
+      border-color: var(--pink);
+      box-shadow: 0 0 0 4px rgba(255, 107, 157, 0.3);
+    }
+    .amount-input::placeholder {
+      color: #C4A8E0;
+    }
+
+    .token-tag {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: linear-gradient(135deg, var(--yellow), var(--orange));
+      color: var(--dark);
+      font-family: 'Fredoka One', cursive;
+      font-size: 1rem;
+      padding: 8px 14px;
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(255, 140, 66, 0.3);
+    }
+
+    /* Quick amount buttons */
+    .quick-amounts {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .quick-btn {
+      flex: 1;
+      min-width: 60px;
+      padding: 10px 6px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 0.95rem;
+      border: 3px solid var(--purple);
+      border-radius: 14px;
+      background: white;
+      color: var(--purple);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .quick-btn:hover {
+      background: var(--purple);
+      color: white;
+      transform: scale(1.08);
+      box-shadow: 0 4px 12px rgba(196, 113, 245, 0.4);
+    }
+    .quick-btn:active { transform: scale(0.95); }
+
+    /* Quote display */
+    .quote-box {
+      background: linear-gradient(135deg, #F0F4FF, #F8F0FF);
+      border: 3px dashed var(--blue);
+      border-radius: 18px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: none;
+    }
+    .quote-box.visible { display: block; animation: popIn 0.3s ease; }
+
+    .quote-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--dark);
+    }
+    .quote-row .label { opacity: 0.6; }
+    .quote-row .value { color: var(--purple); font-family: 'Fredoka One', cursive; }
+    .quote-row .value.green { color: var(--green); }
+
+    /* Main bridge button */
+    .bridge-btn {
+      width: 100%;
+      padding: 18px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.5rem;
+      letter-spacing: 1px;
+      border: none;
+      border-radius: 22px;
+      cursor: pointer;
+      color: white;
+      background: linear-gradient(135deg, var(--pink), var(--purple), var(--blue));
+      background-size: 200% 200%;
+      animation: btnGradient 3s ease infinite;
+      box-shadow: 0 6px 25px rgba(196, 113, 245, 0.5);
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .bridge-btn:hover:not(:disabled) {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 10px 35px rgba(196, 113, 245, 0.6);
+    }
+    .bridge-btn:active:not(:disabled) { transform: translateY(0) scale(0.98); }
+    .bridge-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    @keyframes btnGradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Connect wallet button */
+    .connect-btn {
+      width: 100%;
+      padding: 18px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.3rem;
+      border: 4px solid var(--yellow);
+      border-radius: 22px;
+      cursor: pointer;
+      color: var(--dark);
+      background: linear-gradient(135deg, var(--yellow), var(--orange));
+      box-shadow: 0 6px 20px rgba(255, 217, 61, 0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .connect-btn:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 10px 30px rgba(255, 217, 61, 0.5);
+    }
+    .connect-btn:active { transform: scale(0.97); }
+
+    .wallet-info {
+      text-align: center;
+      font-weight: 900;
+      font-size: 0.85rem;
+      color: var(--dark);
+      opacity: 0.6;
+      margin-bottom: 16px;
+      word-break: break-all;
+    }
+
+    /* Status area */
+    .status-area {
+      margin-top: 20px;
+      text-align: center;
+      display: none;
+    }
+    .status-area.visible { display: block; }
+
+    .status-msg {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.1rem;
+      color: var(--dark);
+      margin-bottom: 8px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 16px;
+      border-radius: 10px;
+      background: #EDE4F7;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 10px;
+      background: linear-gradient(90deg, var(--green), var(--blue), var(--purple));
+      background-size: 200% 100%;
+      animation: progressAnim 1.5s linear infinite;
+      transition: width 0.5s;
+    }
+    @keyframes progressAnim {
+      0% { background-position: 200% 0; }
+      100% { background-position: 0% 0; }
+    }
+
+    .tx-link {
+      font-size: 0.85rem;
+      color: var(--purple);
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .tx-link:hover { text-decoration: underline; }
+
+    /* Success confetti animation */
+    .success-banner {
+      display: none;
+      text-align: center;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--green), var(--blue));
+      border-radius: 18px;
+      margin-top: 16px;
+      color: white;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.3rem;
+      animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .success-banner.visible { display: block; }
+
+    /* Sparkle decoration */
+    .sparkle {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: var(--yellow);
+      clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+      animation: sparkleAnim 2s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .sparkle:nth-child(1) { top: -10px; right: 30px; animation-delay: 0s; }
+    .sparkle:nth-child(2) { top: 20px; left: -8px; animation-delay: 0.5s; width: 16px; height: 16px; background: var(--pink); }
+    .sparkle:nth-child(3) { bottom: -5px; right: 60px; animation-delay: 1s; width: 14px; height: 14px; background: var(--green); }
+
+    @keyframes sparkleAnim {
+      0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+      50% { transform: scale(1.3) rotate(180deg); opacity: 0.6; }
+    }
+
+    .error-msg {
+      color: var(--red);
+      font-weight: 900;
+      font-size: 0.9rem;
+      text-align: center;
+      margin-top: 12px;
+      display: none;
+    }
+    .error-msg.visible { display: block; animation: popIn 0.3s ease; }
+  </style>
+</head>
+<body>
+
+  <!-- Floating bubbles -->
+  <div class="bubble"></div>
+  <div class="bubble"></div>
+  <div class="bubble"></div>
+  <div class="bubble"></div>
+  <div class="bubble"></div>
+
+  <div class="card">
+    <!-- Sparkles -->
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+    <div class="sparkle"></div>
+
+    <div class="title">USDC Bridge!</div>
+    <div class="subtitle">Zoom your coins from Arbitrum to Base</div>
+
+    <!-- Chain badges -->
+    <div class="chain-row">
+      <div class="chain-badge">Arbitrum</div>
+      <span class="arrow-bounce">&#10132;</span>
+      <div class="chain-badge dest">Base</div>
+    </div>
+
+    <!-- Wallet connection -->
+    <div id="walletSection">
+      <button class="connect-btn" id="connectBtn" onclick="connectWallet()">
+        Connect Wallet
+      </button>
+    </div>
+
+    <!-- Bridge form (hidden until connected) -->
+    <div id="bridgeForm" style="display: none;">
+      <div class="wallet-info" id="walletAddr"></div>
+
+      <div class="input-group">
+        <label class="input-label">How much USDC?</label>
+        <div class="amount-wrapper">
+          <input
+            type="number"
+            class="amount-input"
+            id="amountInput"
+            placeholder="0.00"
+            min="0"
+            step="any"
+            oninput="onAmountChange()"
+          />
+          <span class="token-tag">USDC</span>
+        </div>
+      </div>
+
+      <div class="quick-amounts">
+        <button class="quick-btn" onclick="setAmount('1')">$1</button>
+        <button class="quick-btn" onclick="setAmount('5')">$5</button>
+        <button class="quick-btn" onclick="setAmount('10')">$10</button>
+        <button class="quick-btn" onclick="setAmount('25')">$25</button>
+        <button class="quick-btn" onclick="setAmount('50')">$50</button>
+      </div>
+
+      <!-- Quote info -->
+      <div class="quote-box" id="quoteBox">
+        <div class="quote-row">
+          <span class="label">You get</span>
+          <span class="value green" id="quoteOutput">--</span>
+        </div>
+        <div class="quote-row">
+          <span class="label">Fee</span>
+          <span class="value" id="quoteFee">--</span>
+        </div>
+        <div class="quote-row">
+          <span class="label">Speed</span>
+          <span class="value" id="quoteTime">--</span>
+        </div>
+      </div>
+
+      <button class="bridge-btn" id="bridgeBtn" onclick="doBridge()" disabled>
+        Get Quote First!
+      </button>
+
+      <div class="error-msg" id="errorMsg"></div>
+
+      <!-- Status area -->
+      <div class="status-area" id="statusArea">
+        <div class="status-msg" id="statusMsg">Sending...</div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 0%"></div></div>
+        <a class="tx-link" id="txLink" href="#" target="_blank" style="display:none;">View on Explorer</a>
+      </div>
+
+      <div class="success-banner" id="successBanner">
+        Woohoo! Your USDC arrived on Base!
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Constants ---
+    const ACROSS_API = "https://app.across.to/api";
+    const ARBITRUM_CHAIN_ID = 42161;
+    const BASE_CHAIN_ID = 8453;
+    const USDC_ARBITRUM = "0xaf88d065e77c8cC2239327C5EDb3A432268e5831";
+    const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+    const USDC_DECIMALS = 6;
+
+    const ARBITRUM_HEX = "0x" + ARBITRUM_CHAIN_ID.toString(16);
+
+    let provider = null;
+    let signer = null;
+    let depositor = null;
+    let currentQuote = null;
+    let quoteTimer = null;
+
+    // --- DOM refs ---
+    const $connectBtn = document.getElementById("connectBtn");
+    const $walletSection = document.getElementById("walletSection");
+    const $bridgeForm = document.getElementById("bridgeForm");
+    const $walletAddr = document.getElementById("walletAddr");
+    const $amountInput = document.getElementById("amountInput");
+    const $quoteBox = document.getElementById("quoteBox");
+    const $quoteOutput = document.getElementById("quoteOutput");
+    const $quoteFee = document.getElementById("quoteFee");
+    const $quoteTime = document.getElementById("quoteTime");
+    const $bridgeBtn = document.getElementById("bridgeBtn");
+    const $errorMsg = document.getElementById("errorMsg");
+    const $statusArea = document.getElementById("statusArea");
+    const $statusMsg = document.getElementById("statusMsg");
+    const $progressFill = document.getElementById("progressFill");
+    const $txLink = document.getElementById("txLink");
+    const $successBanner = document.getElementById("successBanner");
+
+    // --- Helpers ---
+    function showError(msg) {
+      $errorMsg.textContent = msg;
+      $errorMsg.classList.add("visible");
+      setTimeout(() => $errorMsg.classList.remove("visible"), 5000);
+    }
+
+    function shortAddr(addr) {
+      return addr.slice(0, 6) + "..." + addr.slice(-4);
+    }
+
+    function formatUsdc(wei) {
+      const n = Number(wei) / 1e6;
+      return n.toFixed(n < 1 ? 4 : 2) + " USDC";
+    }
+
+    // --- Wallet ---
+    async function connectWallet() {
+      if (!window.ethereum) {
+        showError("No wallet found! Install MetaMask.");
+        return;
+      }
+
+      try {
+        provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = await provider.getSigner();
+        depositor = await signer.getAddress();
+
+        // Switch to Arbitrum
+        try {
+          await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: ARBITRUM_HEX }],
+          });
+        } catch (switchErr) {
+          if (switchErr.code === 4902) {
+            await window.ethereum.request({
+              method: "wallet_addEthereumChain",
+              params: [{
+                chainId: ARBITRUM_HEX,
+                chainName: "Arbitrum One",
+                rpcUrls: ["https://arb1.arbitrum.io/rpc"],
+                nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+                blockExplorerUrls: ["https://arbiscan.io"],
+              }],
+            });
+          } else {
+            throw switchErr;
+          }
+        }
+
+        // Refresh signer after chain switch
+        provider = new ethers.BrowserProvider(window.ethereum);
+        signer = await provider.getSigner();
+
+        $walletSection.style.display = "none";
+        $bridgeForm.style.display = "block";
+        $walletAddr.textContent = "Wallet: " + shortAddr(depositor);
+      } catch (err) {
+        showError(err.message || "Failed to connect wallet");
+      }
+    }
+
+    // --- Amount / Quote ---
+    function setAmount(val) {
+      $amountInput.value = val;
+      onAmountChange();
+    }
+
+    function onAmountChange() {
+      clearTimeout(quoteTimer);
+      currentQuote = null;
+      $bridgeBtn.disabled = true;
+      $bridgeBtn.textContent = "Get Quote First!";
+      $quoteBox.classList.remove("visible");
+
+      const val = parseFloat($amountInput.value);
+      if (!val || val <= 0) return;
+
+      quoteTimer = setTimeout(() => fetchQuote(val), 600);
+    }
+
+    async function fetchQuote(amount) {
+      if (!depositor) return;
+
+      $bridgeBtn.textContent = "Loading quote...";
+      $bridgeBtn.disabled = true;
+
+      try {
+        const amountWei = BigInt(Math.round(amount * 1e6)).toString();
+        const params = new URLSearchParams({
+          tradeType: "exactInput",
+          amount: amountWei,
+          inputToken: USDC_ARBITRUM,
+          outputToken: USDC_BASE,
+          originChainId: ARBITRUM_CHAIN_ID.toString(),
+          destinationChainId: BASE_CHAIN_ID.toString(),
+          depositor,
+          slippage: "auto",
+        });
+
+        const res = await fetch(`${ACROSS_API}/swap/approval?${params}`);
+        if (!res.ok) {
+          const body = await res.text();
+          throw new Error(body);
+        }
+
+        currentQuote = await res.json();
+
+        const outputAmt = Number(currentQuote.expectedOutputAmount) / 1e6;
+        const fee = amount - outputAmt;
+
+        $quoteOutput.textContent = formatUsdc(currentQuote.expectedOutputAmount);
+        $quoteFee.textContent = fee > 0 ? "~" + fee.toFixed(4) + " USDC" : "< 0.01 USDC";
+        $quoteTime.textContent = "~" + (currentQuote.expectedFillTime || 2) + "s";
+        $quoteBox.classList.add("visible");
+
+        $bridgeBtn.textContent = "Bridge " + amount + " USDC!";
+        $bridgeBtn.disabled = false;
+      } catch (err) {
+        showError("Quote failed: " + (err.message || err));
+        $bridgeBtn.textContent = "Get Quote First!";
+      }
+    }
+
+    // --- Bridge ---
+    async function doBridge() {
+      if (!currentQuote || !signer) return;
+
+      $bridgeBtn.disabled = true;
+      $bridgeBtn.textContent = "Bridging...";
+      $statusArea.classList.add("visible");
+      $successBanner.classList.remove("visible");
+      $txLink.style.display = "none";
+      $progressFill.style.width = "10%";
+
+      try {
+        // Step 1: Approvals
+        if (currentQuote.approvalTxns && currentQuote.approvalTxns.length > 0) {
+          $statusMsg.textContent = "Approving USDC...";
+          $progressFill.style.width = "15%";
+
+          for (const approvalTx of currentQuote.approvalTxns) {
+            const tx = await signer.sendTransaction({
+              to: approvalTx.to,
+              data: approvalTx.data,
+            });
+            await tx.wait();
+          }
+          $progressFill.style.width = "30%";
+        }
+
+        // Step 2: Bridge tx
+        $statusMsg.textContent = "Sending bridge transaction...";
+        $progressFill.style.width = "40%";
+
+        const swapTx = await signer.sendTransaction({
+          to: currentQuote.swapTx.to,
+          data: currentQuote.swapTx.data,
+          gasLimit: currentQuote.swapTx.gas,
+        });
+
+        $statusMsg.textContent = "Waiting for confirmation...";
+        $progressFill.style.width = "50%";
+        $txLink.href = "https://arbiscan.io/tx/" + swapTx.hash;
+        $txLink.textContent = "Tx: " + shortAddr(swapTx.hash);
+        $txLink.style.display = "inline";
+
+        const receipt = await swapTx.wait();
+        $progressFill.style.width = "65%";
+        $statusMsg.textContent = "Confirmed! Waiting for fill on Base...";
+
+        // Step 3: Poll status
+        await pollStatus(receipt.hash);
+
+      } catch (err) {
+        showError(err.reason || err.message || "Transaction failed");
+        $statusMsg.textContent = "Failed!";
+        $progressFill.style.width = "0%";
+        $bridgeBtn.disabled = false;
+        $bridgeBtn.textContent = "Try Again!";
+      }
+    }
+
+    async function pollStatus(txHash) {
+      const url = `${ACROSS_API}/deposit/status?depositTxnRef=${txHash}`;
+
+      for (let i = 0; i < 60; i++) {
+        try {
+          const res = await fetch(url);
+          if (res.ok) {
+            const data = await res.json();
+            const pct = Math.min(65 + i * 2, 95);
+            $progressFill.style.width = pct + "%";
+
+            if (data.status === "filled") {
+              $progressFill.style.width = "100%";
+              $statusMsg.textContent = "Filled!";
+              $successBanner.classList.add("visible");
+              $bridgeBtn.textContent = "Bridge More!";
+              $bridgeBtn.disabled = false;
+              currentQuote = null;
+              return;
+            }
+          }
+        } catch (_) { /* ignore fetch errors during polling */ }
+
+        await new Promise(r => setTimeout(r, 10000));
+      }
+
+      $statusMsg.textContent = "Still waiting... check Across explorer.";
+      $bridgeBtn.textContent = "Bridge More!";
+      $bridgeBtn.disabled = false;
+    }
+  </script>
+</body>
+</html>
