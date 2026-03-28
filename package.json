@@ -1,0 +1,13 @@
+{
+  "name": "acrossjr",
+  "version": "1.0.0",
+  "description": "Bridge USDC from Arbitrum to Base using Across Protocol Swap API",
+  "main": "bridge.js",
+  "type": "module",
+  "scripts": {
+    "bridge": "node bridge.js"
+  },
+  "dependencies": {
+    "ethers": "^6.13.0"
+  }
+}
